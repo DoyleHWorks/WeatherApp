@@ -54,7 +54,30 @@ class ViewController: UIViewController {
         }
     }
     
-
+    // MARK: Fetch data from server
+    private func fecthData<T: Decodable>(url: URL, completion: @escaping ((T?) -> Void)) {
+        let session = URLSession(configuration: .default)
+        session.dataTask(with: URLRequest(url: url)) { data, response, error in
+            guard let data, error == nil else {
+                print("Data loading failed.")
+                completion(nil)
+                return
+            }
+            let successRange = 200..<300
+            if let response = response as? HTTPURLResponse, successRange.contains(response.statusCode) {
+                guard let decodedData = try? JSONDecoder().decode(T.self, from: data) else {
+                    print("JSON decoding failed.")
+                    completion(nil)
+                    return
+                }
+                completion(decodedData)
+            } else {
+                print("Invalid response")
+                completion(nil)
+            }
+        }.resume()
+    }
+    
     
     // MARK: - UI Configurations
     private func configureUI() {
