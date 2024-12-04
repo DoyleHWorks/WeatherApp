@@ -12,8 +12,15 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        printAPPID()
     }
 
-
+    private func printAPPID() {
+        if let apiKey = Bundle.main.object(forInfoDictionaryKey: "OPENWEATHER_APP_ID") as? String {
+            print("API Key: \(apiKey)")
+        } else {
+            print("OPENWEATHER_APP_ID is not set or couldn't be read")
+        }
+    }
 }
 

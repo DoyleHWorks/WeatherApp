@@ -140,6 +140,8 @@
 /* Begin XCBuildConfiguration section */
 		714F12BC2D003FA600691BAD /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 714F12A72D003FA500691BAD /* WeatherApp */;
+			baseConfigurationReferenceRelativePath = Secrets/APIKeys.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -171,6 +173,8 @@
 		};
 		714F12BD2D003FA600691BAD /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 714F12A72D003FA500691BAD /* WeatherApp */;
+			baseConfigurationReferenceRelativePath = Secrets/APIKeys.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
