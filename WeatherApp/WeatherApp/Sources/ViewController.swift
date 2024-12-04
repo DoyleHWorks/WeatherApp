@@ -6,13 +6,44 @@
 //
 
 import UIKit
+import SnapKit
+import Then
 
 class ViewController: UIViewController {
-
+    
+    private let titleLabel = UILabel().then {
+        $0.text = "Seoul"
+        $0.textColor = .white
+        $0.font = .boldSystemFont(ofSize: 30)
+    }
+    private let tempLabel = UILabel().then {
+        $0.textColor = .white
+        $0.text = "20°C"
+        $0.font = .boldSystemFont(ofSize: 50)
+    }
+    private let tempMinLabel = UILabel().then {
+        $0.textColor = .white
+        $0.text = "20°C"
+        $0.font = .boldSystemFont(ofSize: 20)
+    }
+    private let tempMaxLabel = UILabel().then {
+        $0.textColor = .white
+        $0.text = "20°C"
+        $0.font = .boldSystemFont(ofSize: 20)
+    }
+    private let tempStackView = UIStackView().then {
+        $0.axis = .horizontal
+        $0.spacing = 20
+        $0.distribution = .fillEqually
+    }
+    private let imageView = UIImageView().then {
+        $0.contentMode = .scaleAspectFit
+        $0.backgroundColor = .gray
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        printAPPID()
+        configureUI()
     }
 
     private func printAPPID() {
@@ -20,6 +51,45 @@ class ViewController: UIViewController {
             print("API Key: \(apiKey)")
         } else {
             print("OPENWEATHER_APP_ID is not set or couldn't be read")
+        }
+    }
+    
+
+    
+    // MARK: - UI Configurations
+    private func configureUI() {
+        view.backgroundColor = .black
+        [
+            titleLabel,
+            tempLabel,
+            tempStackView,
+            imageView
+        ].forEach { view.addSubview($0) }
+        
+        [
+            tempMinLabel,
+            tempMaxLabel
+        ].forEach { tempStackView.addArrangedSubview($0) }
+        
+        titleLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalToSuperview().offset(120)
+        }
+        
+        tempLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(titleLabel.snp.bottom).offset(10)
+        }
+        
+        tempStackView.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(tempLabel.snp.bottom).offset(10)
+        }
+        
+        imageView.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.width.height.equalTo(160)
+            $0.top.equalTo(tempStackView.snp.bottom).offset(20)
         }
     }
 }
