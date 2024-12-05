@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import Then
+import Alamofire
 
 class ViewController: UIViewController {
     
@@ -80,9 +81,15 @@ class ViewController: UIViewController {
         }.resume()
     }
     
+    private func fetchDataByAF<T: Decodable>(url: URL, completion: @escaping (Result<T, AFError>) -> Void) {
+        AF.request(url).responseDecodable(of: T.self) { response in
+            completion(response.result)
+        }
+    }
+    
     private func makeURLQueryItems() -> [URLQueryItem] {
         if let apiKey = Bundle.main.object(forInfoDictionaryKey: "OPENWEATHER_APP_ID") as? String {
-//            print("API Key: \(apiKey)")
+            //            print("API Key: \(apiKey)")
             return [
                 URLQueryItem(name: "lat", value: "37.29"),
                 URLQueryItem(name: "lon", value: "127.2"),
@@ -104,29 +111,32 @@ class ViewController: UIViewController {
             return
         }
         
-//        print("Request URL: \(url.absoluteString)")
+        //        print("Request URL: \(url.absoluteString)")
         
-        fetchData(url: url) { [weak self] (result: CurrentWeatherResult?) in
-            guard let self, let result else { return }
-            
-//            print(result)
-            
-            DispatchQueue.main.async {
-                self.tempLabel.text = "\(Int(result.main.temp))°C"
-                self.tempMinLabel.text = "Min: \(Int(result.main.tempMin))°C"
-                self.tempMaxLabel.text = "Max: \(Int(result.main.tempMax))°C"
-            }
-            
-            guard let imageUrl = URL(string: "https://openweathermap.org/img/wn/\(result.weather[0].icon)@2x.png") else {
-                return
-            }
-            
-            if let data = try? Data(contentsOf: imageUrl) {
-                if let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self.imageView.image = image
+        fetchDataByAF(url: url) { [weak self] (result: Result<CurrentWeatherResult, AFError>) in
+            guard let self else { return }
+            switch result {
+            case .success(let result):
+                DispatchQueue.main.async {
+                    self.tempLabel.text = "\(Int(result.main.temp))°C"
+                    self.tempMinLabel.text = "Min: \(Int(result.main.tempMin))°C"
+                    self.tempMaxLabel.text = "Max: \(Int(result.main.tempMax))°C"
+                }
+                
+                guard let imageUrl = URL(string: "https://openweathermap.org/img/wn/\(result.weather[0].icon)@2x.png") else {
+                    return
+                }
+                
+                AF.request(imageUrl).responseData { response in
+                    if let data = response.data, let image = UIImage(data: data) {
+                        DispatchQueue.main.async {
+                            self.imageView.image = image
+                        }
                     }
                 }
+                
+            case .failure(let error):
+                 print("Data load failed: \(error)")
             }
         }
     }
@@ -140,20 +150,20 @@ class ViewController: UIViewController {
             return
         }
         
-//        print("Request URL: \(url.absoluteString)")
+        //        print("Request URL: \(url.absoluteString)")
         
-        fetchData(url: url) { [weak self] (result: ForecastWeatherResult?) in
-            guard let self, let result else { return }
-            
-            for forecastWeather in result.list {
-                print("\(forecastWeather.main)\n\(forecastWeather.dtTxt)\n\n")
+        fetchDataByAF(url: url) { [weak self] (result: Result<ForecastWeatherResult, AFError>) in
+            guard let self else { return }
+            switch result {
+            case .success(let result):
+                DispatchQueue.main.async {
+                    self.dataSource = result.list
+                    self.tableView.reloadData()
+                }
+                
+            case .failure(let error):
+                print("Data load failed: \(error)")
             }
-            
-            DispatchQueue.main.async {
-                self.dataSource = result.list
-                self.tableView.reloadData()
-            }
-            
         }
     }
     
