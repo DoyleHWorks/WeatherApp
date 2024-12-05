@@ -8,8 +8,11 @@
 import UIKit
 import SnapKit
 import Then
+import Alamofire
 
 class ViewController: UIViewController {
+    
+    private var dataSource = [ForecastWeather]()
     
     private let titleLabel = UILabel().then {
         $0.text = "Yangjae Station"
@@ -40,11 +43,18 @@ class ViewController: UIViewController {
         $0.contentMode = .scaleAspectFit
         $0.backgroundColor = .black
     }
+    private lazy var tableView = UITableView().then {
+        $0.backgroundColor = .black
+        $0.delegate = self
+        $0.dataSource = self
+        $0.register(TableViewCell.self, forCellReuseIdentifier: TableViewCell.id)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
         fetchCurrentWeatherData()
+        fetchForecastData()
     }
     
     // MARK: - Fetch data from server
@@ -71,9 +81,15 @@ class ViewController: UIViewController {
         }.resume()
     }
     
+    private func fetchDataByAF<T: Decodable>(url: URL, completion: @escaping (Result<T, AFError>) -> Void) {
+        AF.request(url).responseDecodable(of: T.self) { response in
+            completion(response.result)
+        }
+    }
+    
     private func makeURLQueryItems() -> [URLQueryItem] {
         if let apiKey = Bundle.main.object(forInfoDictionaryKey: "OPENWEATHER_APP_ID") as? String {
-            print("API Key: \(apiKey)")
+            //            print("API Key: \(apiKey)")
             return [
                 URLQueryItem(name: "lat", value: "37.29"),
                 URLQueryItem(name: "lon", value: "127.2"),
@@ -95,29 +111,58 @@ class ViewController: UIViewController {
             return
         }
         
-        print("Request URL: \(url.absoluteString)")
+        //        print("Request URL: \(url.absoluteString)")
         
-        fetchData(url: url) { [weak self] (result: CurrentWeatherResult?) in
-            guard let self, let result else { return }
-            
-            print(result)
-            
-            DispatchQueue.main.async {
-                self.tempLabel.text = "\(Int(result.main.temp))°C"
-                self.tempMinLabel.text = "Min: \(Int(result.main.tempMin))°C"
-                self.tempMaxLabel.text = "Max: \(Int(result.main.tempMax))°C"
-            }
-            
-            guard let imageUrl = URL(string: "https://openweathermap.org/img/wn/\(result.weather[0].icon)@2x.png") else {
-                return
-            }
-            
-            if let data = try? Data(contentsOf: imageUrl) {
-                if let image = UIImage(data: data) {
-                    DispatchQueue.main.async {
-                        self.imageView.image = image
+        fetchDataByAF(url: url) { [weak self] (result: Result<CurrentWeatherResult, AFError>) in
+            guard let self else { return }
+            switch result {
+            case .success(let result):
+                DispatchQueue.main.async {
+                    self.tempLabel.text = "\(Int(result.main.temp))°C"
+                    self.tempMinLabel.text = "Min: \(Int(result.main.tempMin))°C"
+                    self.tempMaxLabel.text = "Max: \(Int(result.main.tempMax))°C"
+                }
+                
+                guard let imageUrl = URL(string: "https://openweathermap.org/img/wn/\(result.weather[0].icon)@2x.png") else {
+                    return
+                }
+                
+                AF.request(imageUrl).responseData { response in
+                    if let data = response.data, let image = UIImage(data: data) {
+                        DispatchQueue.main.async {
+                            self.imageView.image = image
+                        }
                     }
                 }
+                
+            case .failure(let error):
+                 print("Data load failed: \(error)")
+            }
+        }
+    }
+    
+    private func fetchForecastData() {
+        var urlComponents = URLComponents(string:"https://api.openweathermap.org/data/2.5/forecast")
+        urlComponents?.queryItems = self.makeURLQueryItems()
+        
+        guard let url = urlComponents?.url else {
+            print("Invalid URL")
+            return
+        }
+        
+        //        print("Request URL: \(url.absoluteString)")
+        
+        fetchDataByAF(url: url) { [weak self] (result: Result<ForecastWeatherResult, AFError>) in
+            guard let self else { return }
+            switch result {
+            case .success(let result):
+                DispatchQueue.main.async {
+                    self.dataSource = result.list
+                    self.tableView.reloadData()
+                }
+                
+            case .failure(let error):
+                print("Data load failed: \(error)")
             }
         }
     }
@@ -129,7 +174,8 @@ class ViewController: UIViewController {
             titleLabel,
             tempLabel,
             tempStackView,
-            imageView
+            imageView,
+            tableView
         ].forEach { view.addSubview($0) }
         
         [
@@ -157,6 +203,33 @@ class ViewController: UIViewController {
             $0.width.height.equalTo(160)
             $0.top.equalTo(tempStackView.snp.bottom).offset(20)
         }
+        
+        tableView.snp.makeConstraints {
+            $0.top.equalTo(imageView.snp.bottom).offset(30)
+            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.bottom.equalToSuperview().inset(50)
+        }
     }
 }
 
+extension ViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        40
+    }
+}
+
+extension ViewController: UITableViewDataSource {
+    // numberOfRowsInSection
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        dataSource.count
+    }
+    
+    // cellForRowAt
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: TableViewCell.id) as? TableViewCell else {
+            return UITableViewCell()
+        }
+        cell.configureCell(forecastWeather: dataSource[indexPath.row])
+        return cell
+    }
+}

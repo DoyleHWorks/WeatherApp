@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		714F12F42D00754A00691BAD /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 714F12F32D00754A00691BAD /* SnapKit */; };
 		714F12F92D0075A700691BAD /* Then in Frameworks */ = {isa = PBXBuildFile; productRef = 714F12F82D0075A700691BAD /* Then */; };
+		714F13152D017E1E00691BAD /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 714F13142D017E1E00691BAD /* Alamofire */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				714F13152D017E1E00691BAD /* Alamofire in Frameworks */,
 				714F12F42D00754A00691BAD /* SnapKit in Frameworks */,
 				714F12F92D0075A700691BAD /* Then in Frameworks */,
 			);
@@ -87,6 +89,7 @@
 			packageProductDependencies = (
 				714F12F32D00754A00691BAD /* SnapKit */,
 				714F12F82D0075A700691BAD /* Then */,
+				714F13142D017E1E00691BAD /* Alamofire */,
 			);
 			productName = WeatherApp;
 			productReference = 714F12A52D003FA500691BAD /* WeatherApp.app */;
@@ -119,6 +122,7 @@
 			packageReferences = (
 				714F12F22D00754A00691BAD /* XCRemoteSwiftPackageReference "SnapKit" */,
 				714F12F72D0075A700691BAD /* XCRemoteSwiftPackageReference "Then" */,
+				714F13132D017E1E00691BAD /* XCRemoteSwiftPackageReference "Alamofire" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 714F12A62D003FA500691BAD /* Products */;
@@ -374,6 +378,14 @@
 				minimumVersion = 3.0.0;
 			};
 		};
+		714F13132D017E1E00691BAD /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -386,6 +398,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 714F12F72D0075A700691BAD /* XCRemoteSwiftPackageReference "Then" */;
 			productName = Then;
+		};
+		714F13142D017E1E00691BAD /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 714F13132D017E1E00691BAD /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
