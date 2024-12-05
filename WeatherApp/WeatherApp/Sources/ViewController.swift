@@ -11,6 +11,8 @@ import Then
 
 class ViewController: UIViewController {
     
+    private var dataSource = [ForecastWeather]()
+    
     private let titleLabel = UILabel().then {
         $0.text = "Yangjae Station"
         $0.textColor = .white
@@ -40,11 +42,18 @@ class ViewController: UIViewController {
         $0.contentMode = .scaleAspectFit
         $0.backgroundColor = .black
     }
+    private lazy var tableView = UITableView().then {
+        $0.backgroundColor = .black
+        $0.delegate = self
+        $0.dataSource = self
+        $0.register(TableViewCell.self, forCellReuseIdentifier: TableViewCell.id)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
         fetchCurrentWeatherData()
+        fetchForecastData()
     }
     
     // MARK: - Fetch data from server
@@ -73,7 +82,7 @@ class ViewController: UIViewController {
     
     private func makeURLQueryItems() -> [URLQueryItem] {
         if let apiKey = Bundle.main.object(forInfoDictionaryKey: "OPENWEATHER_APP_ID") as? String {
-            print("API Key: \(apiKey)")
+//            print("API Key: \(apiKey)")
             return [
                 URLQueryItem(name: "lat", value: "37.29"),
                 URLQueryItem(name: "lon", value: "127.2"),
@@ -95,12 +104,12 @@ class ViewController: UIViewController {
             return
         }
         
-        print("Request URL: \(url.absoluteString)")
+//        print("Request URL: \(url.absoluteString)")
         
         fetchData(url: url) { [weak self] (result: CurrentWeatherResult?) in
             guard let self, let result else { return }
             
-            print(result)
+//            print(result)
             
             DispatchQueue.main.async {
                 self.tempLabel.text = "\(Int(result.main.temp))°C"
@@ -122,6 +131,32 @@ class ViewController: UIViewController {
         }
     }
     
+    private func fetchForecastData() {
+        var urlComponents = URLComponents(string:"https://api.openweathermap.org/data/2.5/forecast")
+        urlComponents?.queryItems = self.makeURLQueryItems()
+        
+        guard let url = urlComponents?.url else {
+            print("Invalid URL")
+            return
+        }
+        
+//        print("Request URL: \(url.absoluteString)")
+        
+        fetchData(url: url) { [weak self] (result: ForecastWeatherResult?) in
+            guard let self, let result else { return }
+            
+            for forecastWeather in result.list {
+                print("\(forecastWeather.main)\n\(forecastWeather.dtTxt)\n\n")
+            }
+            
+            DispatchQueue.main.async {
+                self.dataSource = result.list
+                self.tableView.reloadData()
+            }
+            
+        }
+    }
+    
     // MARK: - UI Configurations
     private func configureUI() {
         view.backgroundColor = .black
@@ -129,7 +164,8 @@ class ViewController: UIViewController {
             titleLabel,
             tempLabel,
             tempStackView,
-            imageView
+            imageView,
+            tableView
         ].forEach { view.addSubview($0) }
         
         [
@@ -157,6 +193,33 @@ class ViewController: UIViewController {
             $0.width.height.equalTo(160)
             $0.top.equalTo(tempStackView.snp.bottom).offset(20)
         }
+        
+        tableView.snp.makeConstraints {
+            $0.top.equalTo(imageView.snp.bottom).offset(30)
+            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.bottom.equalToSuperview().inset(50)
+        }
     }
 }
 
+extension ViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        40
+    }
+}
+
+extension ViewController: UITableViewDataSource {
+    // numberOfRowsInSection
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        dataSource.count
+    }
+    
+    // cellForRowAt
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: TableViewCell.id) as? TableViewCell else {
+            return UITableViewCell()
+        }
+        cell.configureCell(forecastWeather: dataSource[indexPath.row])
+        return cell
+    }
+}
